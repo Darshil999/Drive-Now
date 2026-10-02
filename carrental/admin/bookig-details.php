@@ -1,39 +1,12 @@
 <?php
-session_start();
-error_reporting(0);
 include('includes/config.php');
-if(strlen($_SESSION['alogin'])==0)
+if(empty($_SESSION['alogin']))
 	{	
 header('location:index.php');
 }
 else{
-if(isset($_REQUEST['eid']))
-	{
-$eid=intval($_GET['eid']);
-$status="2";
-$sql = "UPDATE tblbooking SET Status=:status WHERE  id=:eid";
-$query = $dbh->prepare($sql);
-$query -> bindParam(':status',$status, PDO::PARAM_STR);
-$query-> bindParam(':eid',$eid, PDO::PARAM_STR);
-$query -> execute();
-  echo "<script>alert('Booking Successfully Cancelled');</script>";
-echo "<script type='text/javascript'> document.location = 'canceled-bookings.php; </script>";
-}
+include('includes/booking-actions.php');
 
-
-if(isset($_REQUEST['aeid']))
-	{
-$aeid=intval($_GET['aeid']);
-$status=1;
-
-$sql = "UPDATE tblbooking SET Status=:status WHERE  id=:aeid";
-$query = $dbh->prepare($sql);
-$query -> bindParam(':status',$status, PDO::PARAM_STR);
-$query-> bindParam(':aeid',$aeid, PDO::PARAM_STR);
-$query -> execute();
-echo "<script>alert('Booking Successfully Confirmed');</script>";
-echo "<script type='text/javascript'> document.location = 'confirmed-bookings.php'; </script>";
-}
 
 
  ?>
@@ -49,7 +22,7 @@ echo "<script type='text/javascript'> document.location = 'confirmed-bookings.ph
 	<meta name="author" content="">
 	<meta name="theme-color" content="#3e454c">
 	
-	<title>Car Rental Portal | New Bookings   </title>
+	<title>DriveNow Admin | Booking Details</title>
 
 	<!-- Font awesome -->
 	<link rel="stylesheet" href="css/font-awesome.min.css">
@@ -67,24 +40,7 @@ echo "<script type='text/javascript'> document.location = 'confirmed-bookings.ph
 	<link rel="stylesheet" href="css/awesome-bootstrap-checkbox.css">
 	<!-- Admin Stye -->
 	<link rel="stylesheet" href="css/style.css">
-  <style>
-		.errorWrap {
-    padding: 10px;
-    margin: 0 0 20px 0;
-    background: #fff;
-    border-left: 4px solid #dd3d36;
-    -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-    box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-}
-.succWrap{
-    padding: 10px;
-    margin: 0 0 20px 0;
-    background: #fff;
-    border-left: 4px solid #5cb85c;
-    -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-    box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-}
-		</style>
+	<link rel="stylesheet" href="css/drivenow-admin.css">
 
 </head>
 
@@ -115,7 +71,7 @@ echo "<script type='text/javascript'> document.location = 'confirmed-bookings.ph
 									<?php 
 $bid=intval($_GET['bid']);
 									$sql = "SELECT tblusers.*,tblbrands.BrandName,tblvehicles.VehiclesTitle,tblbooking.FromDate,tblbooking.ToDate,tblbooking.message,tblbooking.VehicleId as vid,tblbooking.Status,tblbooking.PostingDate,tblbooking.id,tblbooking.BookingNumber,
-DATEDIFF(tblbooking.ToDate,tblbooking.FromDate) as totalnodays,tblvehicles.PricePerDay
+DATEDIFF(tblbooking.ToDate,tblbooking.FromDate)+1 as totalnodays,tblvehicles.PricePerDay
 									  from tblbooking join tblvehicles on tblvehicles.id=tblbooking.VehicleId join tblusers on tblusers.EmailId=tblbooking.userEmail join tblbrands on tblvehicles.VehiclesBrand=tblbrands.id where tblbooking.id=:bid";
 $query = $dbh -> prepare($sql);
 $query -> bindParam(':bid',$bid, PDO::PARAM_STR);
@@ -173,25 +129,15 @@ foreach($results as $result)
 	<th>Total Days</th>
 	<td><?php echo htmlentities($tdays=$result->totalnodays);?></td>
 	<th>Rent Per Days</th>
-	<td><?php echo htmlentities($ppdays=$result->PricePerDay);?></td>
+	<td><?php $ppdays=$result->PricePerDay; echo format_price($ppdays);?></td>
 </tr>
 <tr>
 	<th colspan="3" style="text-align:center">Grand Total</th>
-	<td><?php echo htmlentities($tdays*$ppdays);?></td>
+	<td><?php echo format_price($tdays*$ppdays);?></td>
 </tr>
 <tr>
 <th>Booking Status</th>
-<td><?php 
-if($result->Status==0)
-{
-echo htmlentities('Not Confirmed yet');
-} else if ($result->Status==1) {
-echo htmlentities('Confirmed');
-}
- else{
- 	echo htmlentities('Cancelled');
- }
-										?></td>
+<td><?php echo booking_status_badge($result->Status); ?></td>
 										<th>Last pdation Date</th>
 										<td><?php echo htmlentities($result->LastUpdationDate);?></td>
 									</tr>
@@ -199,9 +145,9 @@ echo htmlentities('Confirmed');
 									<?php if($result->Status==0){ ?>
 										<tr>	
 										<td style="text-align:center" colspan="4">
-				<a href="bookig-details.php?aeid=<?php echo htmlentities($result->id);?>" onclick="return confirm('Do you really want to Confirm this booking')" class="btn btn-primary"> Confirm Booking</a> 
+				<?php echo action_button('confirm_booking', $result->id, 'Confirm Booking', 'Confirm this booking?', 'btn btn-success'); ?> 
 
-<a href="bookig-details.php?eid=<?php echo htmlentities($result->id);?>" onclick="return confirm('Do you really want to Cancel this Booking')" class="btn btn-danger"> Cancel Booking</a>
+<?php echo action_button('cancel_booking', $result->id, 'Cancel Booking', 'Cancel this booking?', 'btn btn-danger'); ?>
 </td>
 </tr>
 <?php } ?>
@@ -210,6 +156,7 @@ echo htmlentities('Confirmed');
 									</tbody>
 								</table>
 								<form method="post">
+<?php echo csrf_field(); ?>
 	   <input name="Submit2" type="submit" class="txtbox4" value="Print" onClick="return f3();" style="cursor: pointer;"  />
 	</form>
 

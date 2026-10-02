@@ -1,8 +1,6 @@
 <?php
-session_start();
-error_reporting(0);
 include('includes/config.php');
-if(strlen($_SESSION['alogin'])==0)
+if(empty($_SESSION['alogin']))
 	{	
 header('location:index.php');
 }
@@ -19,7 +17,7 @@ else{
 	<meta name="author" content="">
 	<meta name="theme-color" content="#3e454c">
 	
-	<title>Car Rental Portal | Admin Dashboard</title>
+	<title>DriveNow Admin | Dashboard</title>
 
 	<!-- Font awesome -->
 	<link rel="stylesheet" href="css/font-awesome.min.css">
@@ -37,6 +35,7 @@ else{
 	<link rel="stylesheet" href="css/awesome-bootstrap-checkbox.css">
 	<!-- Admin Stye -->
 	<link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" href="css/drivenow-admin.css">
 </head>
 
 <body>

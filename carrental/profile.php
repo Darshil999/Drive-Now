@@ -1,40 +1,54 @@
 <?php
-session_start();
-error_reporting(0);
 include('includes/config.php');
-if(strlen($_SESSION['login'])==0)
-  { 
-header('location:index.php');
+if(!is_logged_in())
+  {
+flash('info', 'Please log in to continue.');
+redirect('index.php');
 }
 else{
 if(isset($_POST['updateprofile']))
   {
-$name=$_POST['fullname'];
-$mobileno=$_POST['mobilenumber'];
-$dob=$_POST['dob'];
-$adress=$_POST['address'];
-$city=$_POST['city'];
-$country=$_POST['country'];
-$email=$_SESSION['login'];
-$sql="update tblusers set FullName=:name,ContactNo=:mobileno,dob=:dob,Address=:adress,City=:city,Country=:country where EmailId=:email";
-$query = $dbh->prepare($sql);
-$query->bindParam(':name',$name,PDO::PARAM_STR);
-$query->bindParam(':mobileno',$mobileno,PDO::PARAM_STR);
-$query->bindParam(':dob',$dob,PDO::PARAM_STR);
-$query->bindParam(':adress',$adress,PDO::PARAM_STR);
-$query->bindParam(':city',$city,PDO::PARAM_STR);
-$query->bindParam(':country',$country,PDO::PARAM_STR);
-$query->bindParam(':email',$email,PDO::PARAM_STR);
-$query->execute();
-$msg="Profile Updated Successfully";
+$name=trim($_POST['fullname'] ?? '');
+$mobileno=trim($_POST['mobilenumber'] ?? '');
+$dob=trim($_POST['dob'] ?? '');
+$adress=trim($_POST['address'] ?? '');
+$city=trim($_POST['city'] ?? '');
+$country=trim($_POST['country'] ?? '');
+
+if ($name === '' || mb_strlen($name) > 120) {
+    flash('error', 'Please enter your full name.');
+} elseif (!is_valid_mobile($mobileno)) {
+    flash('error', 'Mobile number must be exactly 10 digits.');
+} elseif ($dob !== '' && (!is_valid_date($dob) || $dob > date('Y-m-d'))) {
+    flash('error', 'Please enter a valid date of birth.');
+} elseif (mb_strlen($adress) > 255 || mb_strlen($city) > 100 || mb_strlen($country) > 100) {
+    flash('error', 'Address, city or country is too long.');
+} else {
+    $sql="update tblusers set FullName=:name,ContactNo=:mobileno,dob=:dob,Address=:adress,City=:city,Country=:country where EmailId=:email";
+    $query = $dbh->prepare($sql);
+    $query->execute([
+        ':name' => $name,
+        ':mobileno' => $mobileno,
+        ':dob' => $dob,
+        ':adress' => $adress,
+        ':city' => $city,
+        ':country' => $country,
+        ':email' => $_SESSION['login'],
+    ]);
+    $_SESSION['fname'] = $name;
+    flash('success', 'Profile updated successfully.');
+}
+redirect('profile.php');
 }
 
 ?>
   <!DOCTYPE HTML>
 <html lang="en">
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Car Rental Portal | My Profile</title>
+<title>DriveNow | My Profile</title>
 <!--Bootstrap -->
 <link rel="stylesheet" href="assets/css/bootstrap.min.css" type="text/css">
 <!--Custome Style -->
@@ -49,16 +63,9 @@ $msg="Profile Updated Successfully";
 <!--FontAwesome Font Style -->
 <link href="assets/css/font-awesome.min.css" rel="stylesheet">
 
-<!-- SWITCHER -->
-		<link rel="stylesheet" id="switcher-css" type="text/css" href="assets/switcher/css/switcher.css" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/red.css" title="red" media="all" data-default-color="true" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/orange.css" title="orange" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/blue.css" title="blue" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/pink.css" title="pink" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/green.css" title="green" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/purple.css" title="purple" media="all" />
+<link rel="stylesheet" href="assets/switcher/css/red.css" type="text/css">
+<link rel="stylesheet" href="assets/css/drivenow.css" type="text/css">
 <link rel="apple-touch-icon-precomposed" sizes="144x144" href="assets/images/favicon-icon/apple-touch-icon-144-precomposed.png">
-<link rel="apple-touch-icon-precomposed" sizes="114x114" href="assets/images/favicon-icon/apple-touch-icon-114-precomposed.html">
 <link rel="apple-touch-icon-precomposed" sizes="72x72" href="assets/images/favicon-icon/apple-touch-icon-72-precomposed.png">
 <link rel="apple-touch-icon-precomposed" href="assets/images/favicon-icon/apple-touch-icon-57-precomposed.png">
 <link rel="shortcut icon" href="assets/images/favicon-icon/favicon.png">
@@ -84,9 +91,6 @@ $msg="Profile Updated Successfully";
 </head>
 <body>
 
-<!-- Start Switcher -->
-<?php include('includes/colorswitcher.php');?>
-<!-- /Switcher -->  
         
 <!--Header-->
 <?php include('includes/header.php');?>
@@ -99,7 +103,7 @@ $msg="Profile Updated Successfully";
         <h1>Your Profile</h1>
       </div>
       <ul class="coustom-breadcrumb">
-        <li><a href="#">Home</a></li>
+        <li><a href="index.php">Home</a></li>
         <li>Profile</li>
       </ul>
     </div>
@@ -140,10 +144,9 @@ foreach($results as $result)
         <?php include('includes/sidebar.php');?>
       <div class="col-md-6 col-sm-8">
         <div class="profile_wrap">
-          <h5 class="uppercase underline">Genral Settings</h5>
-          <?php  
-         if($msg){?><div class="succWrap"><strong>SUCCESS</strong>:<?php echo htmlentities($msg); ?> </div><?php }?>
+          <h5 class="uppercase underline">General Settings</h5>
           <form  method="post">
+<?php echo csrf_field(); ?>
            <div class="form-group">
               <label class="control-label">Reg Date -</label>
              <?php echo htmlentities($result->RegDate);?>
@@ -164,23 +167,23 @@ foreach($results as $result)
             </div>
             <div class="form-group">
               <label class="control-label">Phone Number</label>
-              <input class="form-control white_bg" name="mobilenumber" value="<?php echo htmlentities($result->ContactNo);?>" id="phone-number" type="text" required>
+              <input class="form-control white_bg" name="mobilenumber" value="<?php echo htmlentities($result->ContactNo);?>" id="phone-number" type="tel" pattern="[0-9]{10}" maxlength="10" title="Enter a 10 digit mobile number" required>
             </div>
             <div class="form-group">
-              <label class="control-label">Date of Birth&nbsp;(dd/mm/yyyy)</label>
-              <input class="form-control white_bg" value="<?php echo htmlentities($result->dob);?>" name="dob" placeholder="dd/mm/yyyy" id="birth-date" type="text" >
+              <label class="control-label" for="birth-date">Date of Birth</label>
+              <input class="form-control white_bg" value="<?php echo is_valid_date((string) $result->dob) ? e($result->dob) : '';?>" name="dob" id="birth-date" type="date" max="<?php echo date('Y-m-d'); ?>">
             </div>
             <div class="form-group">
               <label class="control-label">Your Address</label>
-              <textarea class="form-control white_bg" name="address" rows="4" ><?php echo htmlentities($result->Address);?></textarea>
-            </div>
-            <div class="form-group">
-              <label class="control-label">Country</label>
-              <input class="form-control white_bg"  id="country" name="country" value="<?php echo htmlentities($result->City);?>" type="text">
+              <textarea class="form-control white_bg" name="address" rows="4" maxlength="255"><?php echo htmlentities($result->Address);?></textarea>
             </div>
             <div class="form-group">
               <label class="control-label">City</label>
-              <input class="form-control white_bg" id="city" name="city" value="<?php echo htmlentities($result->City);?>" type="text">
+              <input class="form-control white_bg" id="city" name="city" value="<?php echo htmlentities($result->City);?>" type="text" maxlength="100">
+            </div>
+            <div class="form-group">
+              <label class="control-label">Country</label>
+              <input class="form-control white_bg"  id="country" name="country" value="<?php echo htmlentities($result->Country);?>" type="text" maxlength="100">
             </div>
             <?php }} ?>
            
@@ -195,7 +198,7 @@ foreach($results as $result)
 </section>
 <!--/Profile-setting--> 
 
-<<!--Footer -->
+<!--Footer -->
 <?php include('includes/footer.php');?>
 <!-- /Footer--> 
 
@@ -220,8 +223,6 @@ foreach($results as $result)
 <script src="assets/js/jquery.min.js"></script>
 <script src="assets/js/bootstrap.min.js"></script> 
 <script src="assets/js/interface.js"></script> 
-<!--Switcher-->
-<script src="assets/switcher/js/switcher.js"></script>
 <!--bootstrap-slider-JS--> 
 <script src="assets/js/bootstrap-slider.min.js"></script> 
 <!--Slider-JS--> 

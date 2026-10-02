@@ -1,8 +1,6 @@
 <?php
-session_start();
-error_reporting(0);
 include('includes/config.php');
-if(strlen($_SESSION['alogin'])==0)
+if(empty($_SESSION['alogin']))
 	{	
 header('location:index.php');
 }
@@ -17,18 +15,18 @@ $priceperday=$_POST['priceperday'];
 $fueltype=$_POST['fueltype'];
 $modelyear=$_POST['modelyear'];
 $seatingcapacity=$_POST['seatingcapacity'];
-$airconditioner=$_POST['airconditioner'];
-$powerdoorlocks=$_POST['powerdoorlocks'];
-$antilockbrakingsys=$_POST['antilockbrakingsys'];
-$brakeassist=$_POST['brakeassist'];
-$powersteering=$_POST['powersteering'];
-$driverairbag=$_POST['driverairbag'];
-$passengerairbag=$_POST['passengerairbag'];
-$powerwindow=$_POST['powerwindow'];
-$cdplayer=$_POST['cdplayer'];
-$centrallocking=$_POST['centrallocking'];
-$crashcensor=$_POST['crashcensor'];
-$leatherseats=$_POST['leatherseats'];
+$airconditioner=empty($_POST['airconditioner']) ? 0 : 1;
+$powerdoorlocks=empty($_POST['powerdoorlocks']) ? 0 : 1;
+$antilockbrakingsys=empty($_POST['antilockbrakingsys']) ? 0 : 1;
+$brakeassist=empty($_POST['brakeassist']) ? 0 : 1;
+$powersteering=empty($_POST['powersteering']) ? 0 : 1;
+$driverairbag=empty($_POST['driverairbag']) ? 0 : 1;
+$passengerairbag=empty($_POST['passengerairbag']) ? 0 : 1;
+$powerwindow=empty($_POST['powerwindow']) ? 0 : 1;
+$cdplayer=empty($_POST['cdplayer']) ? 0 : 1;
+$centrallocking=empty($_POST['centrallocking']) ? 0 : 1;
+$crashcensor=empty($_POST['crashcensor']) ? 0 : 1;
+$leatherseats=empty($_POST['leatherseats']) ? 0 : 1;
 $id=intval($_GET['id']);
 
 $sql="update tblvehicles set VehiclesTitle=:vehicletitle,VehiclesBrand=:brand,VehiclesOverview=:vehicleoverview,PricePerDay=:priceperday,FuelType=:fueltype,ModelYear=:modelyear,SeatingCapacity=:seatingcapacity,AirConditioner=:airconditioner,PowerDoorLocks=:powerdoorlocks,AntiLockBrakingSystem=:antilockbrakingsys,BrakeAssist=:brakeassist,PowerSteering=:powersteering,DriverAirbag=:driverairbag,PassengerAirbag=:passengerairbag,PowerWindows=:powerwindow,CDPlayer=:cdplayer,CentralLocking=:centrallocking,CrashSensor=:crashcensor,LeatherSeats=:leatherseats where id=:id ";
@@ -73,7 +71,7 @@ $msg="Data updated successfully";
 	<meta name="author" content="">
 	<meta name="theme-color" content="#3e454c">
 	
-	<title>Car Rental Portal | Admin Edit Vehicle Info</title>
+	<title>DriveNow Admin | Edit Vehicle Info</title>
 
 	<!-- Font awesome -->
 	<link rel="stylesheet" href="css/font-awesome.min.css">
@@ -91,24 +89,7 @@ $msg="Data updated successfully";
 	<link rel="stylesheet" href="css/awesome-bootstrap-checkbox.css">
 	<!-- Admin Stye -->
 	<link rel="stylesheet" href="css/style.css">
-	<style>
-		.errorWrap {
-    padding: 10px;
-    margin: 0 0 20px 0;
-    background: #fff;
-    border-left: 4px solid #dd3d36;
-    -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-    box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-}
-.succWrap{
-    padding: 10px;
-    margin: 0 0 20px 0;
-    background: #fff;
-    border-left: 4px solid #5cb85c;
-    -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-    box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-}
-		</style>
+	<link rel="stylesheet" href="css/drivenow-admin.css">
 </head>
 
 <body>
@@ -143,6 +124,7 @@ foreach($results as $result)
 {	?>
 
 <form method="post" class="form-horizontal" enctype="multipart/form-data">
+<?php echo csrf_field(); ?>
 <div class="form-group">
 <label class="col-sm-2 control-label">Vehicle Title<span style="color:red">*</span></label>
 <div class="col-sm-4">
@@ -182,7 +164,7 @@ continue;
 </div>
 
 <div class="form-group">
-<label class="col-sm-2 control-label">Price Per Day(in USD)<span style="color:red">*</span></label>
+<label class="col-sm-2 control-label">Price Per Day (<?php echo e(APP_CURRENCY); ?>)<span style="color:red">*</span></label>
 <div class="col-sm-4">
 <input type="text" name="priceperday" class="form-control" value="<?php echo htmlentities($result->PricePerDay);?>" required>
 </div>

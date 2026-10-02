@@ -1,37 +1,35 @@
 <?php
-session_start();
-error_reporting(0);
 include('includes/config.php');
 if(isset($_POST['send']))
   {
-$name=$_POST['fullname'];
-$email=$_POST['email'];
-$contactno=$_POST['contactno'];
-$message=$_POST['message'];
-$sql="INSERT INTO  tblcontactusquery(name,EmailId,ContactNumber,Message) VALUES(:name,:email,:contactno,:message)";
-$query = $dbh->prepare($sql);
-$query->bindParam(':name',$name,PDO::PARAM_STR);
-$query->bindParam(':email',$email,PDO::PARAM_STR);
-$query->bindParam(':contactno',$contactno,PDO::PARAM_STR);
-$query->bindParam(':message',$message,PDO::PARAM_STR);
-$query->execute();
-$lastInsertId = $dbh->lastInsertId();
-if($lastInsertId)
-{
-$msg="Query Sent. We will contact you shortly";
-}
-else 
-{
-$error="Something went wrong. Please try again";
-}
+$name=trim($_POST['fullname'] ?? '');
+$email=trim($_POST['email'] ?? '');
+$contactno=trim($_POST['contactno'] ?? '');
+$message=trim($_POST['message'] ?? '');
 
+if ($name === '' || mb_strlen($name) > 100) {
+    flash('error', 'Please enter your name.');
+} elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    flash('error', 'Please enter a valid email address.');
+} elseif (!is_valid_mobile($contactno)) {
+    flash('error', 'Phone number must be exactly 10 digits.');
+} elseif (mb_strlen($message) < 5 || mb_strlen($message) > 2000) {
+    flash('error', 'Please enter a message between 5 and 2000 characters.');
+} else {
+    $sql="INSERT INTO tblcontactusquery(name,EmailId,ContactNumber,Message,status) VALUES(:name,:email,:contactno,:message,0)";
+    $dbh->prepare($sql)->execute([':name' => $name, ':email' => $email, ':contactno' => $contactno, ':message' => $message]);
+    flash('success', 'Message sent. We will contact you shortly.');
+}
+redirect('contact-us.php');
 }
 ?>
 <!DOCTYPE HTML>
 <html lang="en">
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Car Rental|| Contact Us Page</title>
+<title>DriveNow | Contact Us</title>
 <!--Bootstrap -->
 <link rel="stylesheet" href="assets/css/bootstrap.min.css" type="text/css">
 <!--Custome Style -->
@@ -46,18 +44,11 @@ $error="Something went wrong. Please try again";
 <!--FontAwesome Font Style -->
 <link href="assets/css/font-awesome.min.css" rel="stylesheet">
 
-<!-- SWITCHER -->
-		<link rel="stylesheet" id="switcher-css" type="text/css" href="assets/switcher/css/switcher.css" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/red.css" title="red" media="all" data-default-color="true" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/orange.css" title="orange" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/blue.css" title="blue" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/pink.css" title="pink" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/green.css" title="green" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/purple.css" title="purple" media="all" />
+<link rel="stylesheet" href="assets/switcher/css/red.css" type="text/css">
+<link rel="stylesheet" href="assets/css/drivenow.css" type="text/css">
         
 <!-- Fav and touch icons -->
 <link rel="apple-touch-icon-precomposed" sizes="144x144" href="assets/images/favicon-icon/apple-touch-icon-144-precomposed.png">
-<link rel="apple-touch-icon-precomposed" sizes="114x114" href="assets/images/favicon-icon/apple-touch-icon-114-precomposed.html">
 <link rel="apple-touch-icon-precomposed" sizes="72x72" href="assets/images/favicon-icon/apple-touch-icon-72-precomposed.png">
 <link rel="apple-touch-icon-precomposed" href="assets/images/favicon-icon/apple-touch-icon-57-precomposed.png">
 <link rel="shortcut icon" href="assets/images/favicon-icon/favicon.png">
@@ -83,9 +74,6 @@ $error="Something went wrong. Please try again";
 </head>
 <body>
 
-<<!-- Start Switcher -->
-<?php include('includes/colorswitcher.php');?>
-<!-- /Switcher -->  
         
 <!--Header-->
 <?php include('includes/header.php');?>
@@ -99,7 +87,7 @@ $error="Something went wrong. Please try again";
         <h1>Contact Us</h1>
       </div>
       <ul class="coustom-breadcrumb">
-        <li><a href="#">Home</a></li>
+        <li><a href="index.php">Home</a></li>
         <li>Contact Us</li>
       </ul>
     </div>
@@ -115,10 +103,9 @@ $error="Something went wrong. Please try again";
     <div  class="row">
       <div class="col-md-6">
         <h3>Get in touch using the form below</h3>
-          <?php if($error){?><div class="errorWrap"><strong>ERROR</strong>:<?php echo htmlentities($error); ?> </div><?php } 
-        else if($msg){?><div class="succWrap"><strong>SUCCESS</strong>:<?php echo htmlentities($msg); ?> </div><?php }?>
         <div class="contact_form gray-bg">
           <form  method="post">
+<?php echo csrf_field(); ?>
             <div class="form-group">
               <label class="control-label">Full Name <span>*</span></label>
               <input type="text" name="fullname" class="form-control white_bg" id="fullname" required>
@@ -129,7 +116,7 @@ $error="Something went wrong. Please try again";
             </div>
             <div class="form-group">
               <label class="control-label">Phone Number <span>*</span></label>
-              <input type="text" name="contactno" class="form-control white_bg" id="phonenumber" required maxlength="10" pattern="[0-9]+">
+              <input type="tel" name="contactno" class="form-control white_bg" id="phonenumber" required maxlength="10" pattern="[0-9]{10}" title="Enter a 10 digit phone number">
             </div>
             <div class="form-group">
               <label class="control-label">Message <span>*</span></label>
@@ -145,7 +132,6 @@ $error="Something went wrong. Please try again";
         <h3>Contact Info</h3>
         <div class="contact_detail">
               <?php 
-$pagetype=$_GET['type'];
 $sql = "SELECT Address,EmailId,ContactNo from tblcontactusinfo";
 $query = $dbh -> prepare($sql);
 $query->execute();
@@ -203,8 +189,6 @@ foreach($results as $result)
 <script src="assets/js/jquery.min.js"></script>
 <script src="assets/js/bootstrap.min.js"></script> 
 <script src="assets/js/interface.js"></script> 
-<!--Switcher-->
-<script src="assets/switcher/js/switcher.js"></script>
 <!--bootstrap-slider-JS--> 
 <script src="assets/js/bootstrap-slider.min.js"></script> 
 <!--Slider-JS--> 
@@ -213,5 +197,4 @@ foreach($results as $result)
 
 </body>
 
-<!-- Mirrored from themes.webmasterdriver.net/carforyou/demo/contact-us.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 16 Jun 2017 07:26:55 GMT -->
 </html>

@@ -1,15 +1,21 @@
 <?php 
-session_start();
 include('includes/config.php');
-error_reporting(0);
 
+// Live numbers for the stats strip.
+$stats = $dbh->query('SELECT
+    (SELECT COUNT(*) FROM tblvehicles) AS cars,
+    (SELECT COUNT(*) FROM tblbrands) AS brands,
+    (SELECT COUNT(*) FROM tblusers) AS customers,
+    (SELECT COUNT(*) FROM tblbooking WHERE Status = ' . BOOKING_CONFIRMED . ') AS trips')->fetch(PDO::FETCH_OBJ);
 ?>
 
 <!DOCTYPE HTML>
 <html lang="en">
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Car Rental Portal</title>
+<title>DriveNow | Rent a Car</title>
 <!--Bootstrap -->
 <link rel="stylesheet" href="assets/css/bootstrap.min.css" type="text/css">
 <link rel="stylesheet" href="assets/css/style.css" type="text/css">
@@ -18,15 +24,9 @@ error_reporting(0);
 <link href="assets/css/slick.css" rel="stylesheet">
 <link href="assets/css/bootstrap-slider.min.css" rel="stylesheet">
 <link href="assets/css/font-awesome.min.css" rel="stylesheet">
-		<link rel="stylesheet" id="switcher-css" type="text/css" href="assets/switcher/css/switcher.css" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/red.css" title="red" media="all" data-default-color="true" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/orange.css" title="orange" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/blue.css" title="blue" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/pink.css" title="pink" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/green.css" title="green" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/purple.css" title="purple" media="all" />
+<link rel="stylesheet" href="assets/switcher/css/red.css" type="text/css">
+<link rel="stylesheet" href="assets/css/drivenow.css" type="text/css">
 <link rel="apple-touch-icon-precomposed" sizes="144x144" href="assets/images/favicon-icon/apple-touch-icon-144-precomposed.png">
-<link rel="apple-touch-icon-precomposed" sizes="114x114" href="assets/images/favicon-icon/apple-touch-icon-114-precomposed.html">
 <link rel="apple-touch-icon-precomposed" sizes="72x72" href="assets/images/favicon-icon/apple-touch-icon-72-precomposed.png">
 <link rel="apple-touch-icon-precomposed" href="assets/images/favicon-icon/apple-touch-icon-57-precomposed.png">
 <link rel="shortcut icon" href="assets/images/favicon-icon/favicon.png">
@@ -34,9 +34,6 @@ error_reporting(0);
 </head>
 <body>
 
-<!-- Start Switcher -->
-<?php include('includes/colorswitcher.php');?>
-<!-- /Switcher -->  
         
 <!--Header-->
 <?php include('includes/header.php');?>
@@ -49,8 +46,9 @@ error_reporting(0);
       <div class="row">
         <div class="col-md-5 col-md-push-7">
           <div class="banner_content">
-            <h1>&nbsp;</h1>
-            <p>&nbsp; </p>
+            <h1>Rent the right car, right now.</h1>
+            <p>Browse the fleet, check live availability and book in under a minute.</p>
+            <a href="car-listing.php" class="btn">Browse Cars <span class="angle_arrow"><i class="fa fa-angle-right" aria-hidden="true"></i></span></a>
             </div>
         </div>
       </div>
@@ -64,15 +62,15 @@ error_reporting(0);
 <section class="section-padding gray-bg">
   <div class="container">
     <div class="section-header text-center">
-      <h2>Find the Best <span>CarForYou</span></h2>
-      <p>There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable. If you are going to use a passage of Lorem Ipsum, you need to be sure there isn't anything embarrassing hidden in the middle of text.</p>
+      <h2>Find Your Next <span>Ride</span></h2>
+      <p>From compact city hatchbacks to premium SUVs, pick a car, choose your dates and see the total price before you book. Your bookings, confirmations and cancellations are all in one place.</p>
     </div>
     <div class="row"> 
       
       <!-- Nav tabs -->
       <div class="recent-tab">
         <ul class="nav nav-tabs" role="tablist">
-          <li role="presentation" class="active"><a href="#resentnewcar" role="tab" data-toggle="tab">New Car</a></li>
+          <li role="presentation" class="active"><a href="#resentnewcar" role="tab" data-toggle="tab">Latest Cars</a></li>
         </ul>
       </div>
       <!-- Recently Listed New Cars -->
@@ -101,10 +99,10 @@ foreach($results as $result)
 </div>
 <div class="car-title-m">
 <h6><a href="vehical-details.php?vhid=<?php echo htmlentities($result->id);?>"> <?php echo htmlentities($result->VehiclesTitle);?></a></h6>
-<span class="price">$<?php echo htmlentities($result->PricePerDay);?> /Day</span> 
+<span class="price"><?php echo format_price($result->PricePerDay);?> /Day</span> 
 </div>
 <div class="inventory_info_m">
-<p><?php echo substr($result->VehiclesOverview,0,70);?></p>
+<p><?php echo e(mb_strimwidth(trim($result->VehiclesOverview), 0, 70, '…'));?></p>
 </div>
 </div>
 </div>
@@ -123,32 +121,32 @@ foreach($results as $result)
       <div class="col-lg-3 col-xs-6 col-sm-3">
         <div class="fun-facts-m">
           <div class="cell">
-            <h2><i class="fa fa-calendar" aria-hidden="true"></i>40+</h2>
-            <p>Years In Business</p>
+            <h2><i class="fa fa-car" aria-hidden="true"></i><?php echo (int) $stats->cars; ?></h2>
+            <p>Cars in Our Fleet</p>
           </div>
         </div>
       </div>
       <div class="col-lg-3 col-xs-6 col-sm-3">
         <div class="fun-facts-m">
           <div class="cell">
-            <h2><i class="fa fa-car" aria-hidden="true"></i>1200+</h2>
-            <p>New Cars For Sale</p>
+            <h2><i class="fa fa-tags" aria-hidden="true"></i><?php echo (int) $stats->brands; ?></h2>
+            <p>Brands</p>
           </div>
         </div>
       </div>
       <div class="col-lg-3 col-xs-6 col-sm-3">
         <div class="fun-facts-m">
           <div class="cell">
-            <h2><i class="fa fa-car" aria-hidden="true"></i>1000+</h2>
-            <p>Used Cars For Sale</p>
+            <h2><i class="fa fa-road" aria-hidden="true"></i><?php echo (int) $stats->trips; ?></h2>
+            <p>Confirmed Trips</p>
           </div>
         </div>
       </div>
       <div class="col-lg-3 col-xs-6 col-sm-3">
         <div class="fun-facts-m">
           <div class="cell">
-            <h2><i class="fa fa-user-circle-o" aria-hidden="true"></i>600+</h2>
-            <p>Satisfied Customers</p>
+            <h2><i class="fa fa-user-circle-o" aria-hidden="true"></i><?php echo (int) $stats->customers; ?></h2>
+            <p>Registered Customers</p>
           </div>
         </div>
       </div>
@@ -229,8 +227,6 @@ foreach($results as $result)
 <script src="assets/js/jquery.min.js"></script>
 <script src="assets/js/bootstrap.min.js"></script> 
 <script src="assets/js/interface.js"></script> 
-<!--Switcher-->
-<script src="assets/switcher/js/switcher.js"></script>
 <!--bootstrap-slider-JS--> 
 <script src="assets/js/bootstrap-slider.min.js"></script> 
 <!--Slider-JS--> 
@@ -239,5 +235,4 @@ foreach($results as $result)
 
 </body>
 
-<!-- Mirrored from themes.webmasterdriver.net/carforyou/demo/index.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 16 Jun 2017 07:22:11 GMT -->
 </html>

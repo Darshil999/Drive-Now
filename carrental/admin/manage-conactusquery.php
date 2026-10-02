@@ -1,27 +1,15 @@
 <?php
-session_start();
-error_reporting(0);
 include('includes/config.php');
-if(strlen($_SESSION['alogin'])==0)
+if(empty($_SESSION['alogin']))
 	{	
 header('location:index.php');
 }
 else{
-if(isset($_REQUEST['eid']))
-	{
-$eid=intval($_GET['eid']);
-$status=1;
-$sql = "UPDATE tblcontactusquery SET status=:status WHERE  id=:eid";
-$query = $dbh->prepare($sql);
-$query -> bindParam(':status',$status, PDO::PARAM_STR);
-$query-> bindParam(':eid',$eid, PDO::PARAM_STR);
-$query -> execute();
-
-
+if (($id = posted_action_id('mark_query_read')) !== null) {
+    $dbh->prepare('UPDATE tblcontactusquery SET status = 1 WHERE id = :id')->execute([':id' => $id]);
+    flash('success', 'Query marked as read.');
+    redirect('manage-conactusquery.php');
 }
-
-
-
  ?>
 
 <!doctype html>
@@ -35,7 +23,7 @@ $query -> execute();
 	<meta name="author" content="">
 	<meta name="theme-color" content="#3e454c">
 	
-	<title>Car Rental Portal |Admin Manage Queries   </title>
+	<title>DriveNow Admin | Manage Queries</title>
 
 	<!-- Font awesome -->
 	<link rel="stylesheet" href="css/font-awesome.min.css">
@@ -53,24 +41,7 @@ $query -> execute();
 	<link rel="stylesheet" href="css/awesome-bootstrap-checkbox.css">
 	<!-- Admin Stye -->
 	<link rel="stylesheet" href="css/style.css">
-  <style>
-		.errorWrap {
-    padding: 10px;
-    margin: 0 0 20px 0;
-    background: #fff;
-    border-left: 4px solid #dd3d36;
-    -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-    box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-}
-.succWrap{
-    padding: 10px;
-    margin: 0 0 20px 0;
-    background: #fff;
-    border-left: 4px solid #5cb85c;
-    -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-    box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-}
-		</style>
+	<link rel="stylesheet" href="css/drivenow-admin.css">
 
 </head>
 
@@ -139,7 +110,7 @@ foreach($results as $result)
 	?><td>Read</td>
 <?php } else {?>
 
-<td><a href="manage-conactusquery.php?eid=<?php echo htmlentities($result->id);?>" onclick="return confirm('Do you really want to read')" >Pending</a>
+<td><?php echo action_button('mark_query_read', $result->id, 'Mark as read', 'Mark this query as read?', 'btn btn-xs btn-default'); ?>
 </td>
 <?php } ?>
 										</tr>

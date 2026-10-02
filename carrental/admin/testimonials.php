@@ -1,41 +1,18 @@
 <?php
-session_start();
-error_reporting(0);
 include('includes/config.php');
-if(strlen($_SESSION['alogin'])==0)
+if(empty($_SESSION['alogin']))
 	{	
 header('location:index.php');
 }
 else{
-if(isset($_REQUEST['eid']))
-	{
-$eid=intval($_GET['eid']);
-$status="0";
-$sql = "UPDATE tbltestimonial SET status=:status WHERE  id=:eid";
-$query = $dbh->prepare($sql);
-$query -> bindParam(':status',$status, PDO::PARAM_STR);
-$query-> bindParam(':eid',$eid, PDO::PARAM_STR);
-$query -> execute();
-
-$msg="Testimonial Successfully Inacrive";
+$activateId = posted_action_id('activate_testimonial');
+$deactivateId = posted_action_id('deactivate_testimonial');
+if ($activateId !== null || $deactivateId !== null) {
+    $dbh->prepare('UPDATE tbltestimonial SET status = :status WHERE id = :id')
+        ->execute([':status' => $activateId !== null ? 1 : 0, ':id' => $activateId ?? $deactivateId]);
+    flash('success', $activateId !== null ? 'Testimonial approved and shown on the website.' : 'Testimonial hidden from the website.');
+    redirect('testimonials.php');
 }
-
-
-if(isset($_REQUEST['aeid']))
-	{
-$aeid=intval($_GET['aeid']);
-$status=1;
-
-$sql = "UPDATE tbltestimonial SET status=:status WHERE  id=:aeid";
-$query = $dbh->prepare($sql);
-$query -> bindParam(':status',$status, PDO::PARAM_STR);
-$query-> bindParam(':aeid',$aeid, PDO::PARAM_STR);
-$query -> execute();
-
-$msg="Testimonial Successfully Active";
-}
-
-
  ?>
 
 <!doctype html>
@@ -49,7 +26,7 @@ $msg="Testimonial Successfully Active";
 	<meta name="author" content="">
 	<meta name="theme-color" content="#3e454c">
 	
-	<title>Car Rental Portal |Admin Manage testimonials   </title>
+	<title>DriveNow Admin | Manage Testimonials</title>
 
 	<!-- Font awesome -->
 	<link rel="stylesheet" href="css/font-awesome.min.css">
@@ -67,24 +44,7 @@ $msg="Testimonial Successfully Active";
 	<link rel="stylesheet" href="css/awesome-bootstrap-checkbox.css">
 	<!-- Admin Stye -->
 	<link rel="stylesheet" href="css/style.css">
-  <style>
-		.errorWrap {
-    padding: 10px;
-    margin: 0 0 20px 0;
-    background: #fff;
-    border-left: 4px solid #dd3d36;
-    -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-    box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-}
-.succWrap{
-    padding: 10px;
-    margin: 0 0 20px 0;
-    background: #fff;
-    border-left: 4px solid #5cb85c;
-    -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-    box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-}
-		</style>
+	<link rel="stylesheet" href="css/drivenow-admin.css">
 
 </head>
 
@@ -145,14 +105,13 @@ foreach($results as $result)
 											<td><?php echo htmlentities($result->UserEmail);?></td>
 											<td><?php echo htmlentities($result->Testimonial);?></td>
 											<td><?php echo htmlentities($result->PostingDate);?></td>
-										<td><?php if($result->status=="" || $result->status==0)
-{
-	?><a href="testimonials.php?aeid=<?php echo htmlentities($result->id);?>" onclick="return confirm('Do you really want to Active')"> Inactive</a>
-<?php } else {?>
-
-<a href="testimonials.php?eid=<?php echo htmlentities($result->id);?>" onclick="return confirm('Do you really want to Inactive')"> Active</a>
-</td>
-<?php } ?></td>
+										<td><?php if (empty($result->status)) { ?>
+											<span class="label label-warning">Pending</span>
+											<?php echo action_button('activate_testimonial', $result->id, 'Approve', 'Show this testimonial on the website?', 'btn btn-xs btn-success'); ?>
+										<?php } else { ?>
+											<span class="label label-success">Live</span>
+											<?php echo action_button('deactivate_testimonial', $result->id, 'Hide', 'Hide this testimonial from the website?', 'btn btn-xs btn-default'); ?>
+										<?php } ?></td>
 										</tr>
 										<?php $cnt=$cnt+1; }} ?>
 										

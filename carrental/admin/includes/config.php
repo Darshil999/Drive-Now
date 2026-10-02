@@ -1,16 +1,33 @@
-<?php 
-// DB credentials.
-define('DB_HOST','localhost');
-define('DB_USER','root');
-define('DB_PASS','');
-define('DB_NAME','carrental');
-// Establish database connection.
-try
+<?php
+// Admin panel bootstrap: shares DB connection, session and helpers with the site.
+require_once __DIR__ . '/../../includes/bootstrap.php';
+
+// Status messages shown by individual admin pages.
+$msg = null;
+$error = null;
+
+/**
+ * Renders a state-changing admin action (confirm, cancel, delete...) as a
+ * small POST form with the CSRF token, instead of a GET link.
+ * $field is the POST key the page handler looks for; its value is the record id.
+ */
+function action_button($field, $id, $label, $confirmText, $class = 'btn btn-xs btn-default')
 {
-$dbh = new PDO("mysql:host=".DB_HOST.";dbname=".DB_NAME,DB_USER, DB_PASS,array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'utf8'"));
+    return '<form method="post" class="inline-action" onsubmit="return confirm(' . e(json_encode($confirmText)) . ');">'
+        . csrf_field()
+        . '<input type="hidden" name="' . e($field) . '" value="' . (int) $id . '">'
+        . '<button type="submit" class="' . e($class) . '">' . $label . '</button>'
+        . '</form>';
 }
-catch (PDOException $e)
+
+function booking_status_badge($status)
 {
-exit("Error: " . $e->getMessage());
+    [$label, $class] = booking_status_label($status);
+    return '<span class="label label-' . $class . '">' . $label . '</span>';
 }
-?>
+
+/** POSTed record id for an action button, or null when that action was not submitted. */
+function posted_action_id($field)
+{
+    return isset($_POST[$field]) ? (int) $_POST[$field] : null;
+}

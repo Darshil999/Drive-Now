@@ -1,44 +1,40 @@
-
 <?php
-session_start();
-error_reporting(0);
 include('includes/config.php');
-if(strlen($_SESSION['login'])==0)
-  { 
-header('location:index.php');
+if(!is_logged_in())
+  {
+flash('info', 'Please log in to continue.');
+redirect('index.php');
 }
 else{
 if(isset($_POST['updatepass']))
   {
-$password=md5($_POST['password']);
-$newpassword=md5($_POST['newpassword']);
 $email=$_SESSION['login'];
-  $sql ="SELECT Password FROM tblusers WHERE EmailId=:email and Password=:password";
-$query= $dbh -> prepare($sql);
-$query-> bindParam(':email', $email, PDO::PARAM_STR);
-$query-> bindParam(':password', $password, PDO::PARAM_STR);
-$query-> execute();
-$results = $query -> fetchAll(PDO::FETCH_OBJ);
-if($query -> rowCount() > 0)
-{
-$con="update tblusers set Password=:newpassword where EmailId=:email";
-$chngpwd1 = $dbh->prepare($con);
-$chngpwd1-> bindParam(':email', $email, PDO::PARAM_STR);
-$chngpwd1-> bindParam(':newpassword', $newpassword, PDO::PARAM_STR);
-$chngpwd1->execute();
-$msg="Your Password succesfully changed";
+$query = $dbh->prepare('SELECT Password FROM tblusers WHERE EmailId = :email');
+$query->execute([':email' => $email]);
+$stored = $query->fetchColumn();
+$problem = password_problem($_POST['newpassword'] ?? '', $_POST['confirmpassword'] ?? '');
+
+if (!password_matches($_POST['password'] ?? '', $stored)) {
+    flash('error', 'Your current password is wrong.');
+} elseif ($problem) {
+    flash('error', $problem);
+} else {
+    $dbh->prepare('UPDATE tblusers SET Password = :newpassword WHERE EmailId = :email')
+        ->execute([':newpassword' => hash_password($_POST['newpassword']), ':email' => $email]);
+    session_regenerate_id(true);
+    flash('success', 'Your password was changed successfully.');
 }
-else {
-$error="Your current password is wrong";  
-}
+redirect('update-password.php');
 }
 
 ?>
   <!DOCTYPE HTML>
 <html lang="en">
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Car Rental Portal - Update Password</title>
+<title>DriveNow | Update Password</title>
 <!--Bootstrap -->
 <link rel="stylesheet" href="assets/css/bootstrap.min.css" type="text/css">
 <!--Custome Style -->
@@ -53,18 +49,11 @@ $error="Your current password is wrong";
 <!--FontAwesome Font Style -->
 <link href="assets/css/font-awesome.min.css" rel="stylesheet">
 
-<!-- SWITCHER -->
-		<link rel="stylesheet" id="switcher-css" type="text/css" href="assets/switcher/css/switcher.css" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/red.css" title="red" media="all" data-default-color="true" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/orange.css" title="orange" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/blue.css" title="blue" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/pink.css" title="pink" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/green.css" title="green" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/purple.css" title="purple" media="all" />
+<link rel="stylesheet" href="assets/switcher/css/red.css" type="text/css">
+<link rel="stylesheet" href="assets/css/drivenow.css" type="text/css">
         
 <!-- Fav and touch icons -->
 <link rel="apple-touch-icon-precomposed" sizes="144x144" href="assets/images/favicon-icon/apple-touch-icon-144-precomposed.png">
-<link rel="apple-touch-icon-precomposed" sizes="114x114" href="assets/images/favicon-icon/apple-touch-icon-114-precomposed.html">
 <link rel="apple-touch-icon-precomposed" sizes="72x72" href="assets/images/favicon-icon/apple-touch-icon-72-precomposed.png">
 <link rel="apple-touch-icon-precomposed" href="assets/images/favicon-icon/apple-touch-icon-57-precomposed.png">
 <link rel="shortcut icon" href="assets/images/favicon-icon/favicon.png">
@@ -103,9 +92,6 @@ return true;
 </head>
 <body>
 
-<!-- Start Switcher -->
-<?php include('includes/colorswitcher.php');?>
-<!-- /Switcher -->  
         
 <!--Header-->
 <?php include('includes/header.php');?>
@@ -118,7 +104,7 @@ return true;
         <h1>Update Password</h1>
       </div>
       <ul class="coustom-breadcrumb">
-        <li><a href="#">Home</a></li>
+        <li><a href="index.php">Home</a></li>
         <li>Update Password</li>
       </ul>
     </div>
@@ -158,20 +144,19 @@ foreach($results as $result)
       <div class="col-md-6 col-sm-8">
         <div class="profile_wrap">
 <form name="chngpwd" method="post" onSubmit="return valid();">
+<?php echo csrf_field(); ?>
         
             <div class="gray-bg field-title">
               <h6>Update password</h6>
             </div>
-             <?php if($error){?><div class="errorWrap"><strong>ERROR</strong>:<?php echo htmlentities($error); ?> </div><?php } 
-        else if($msg){?><div class="succWrap"><strong>SUCCESS</strong>:<?php echo htmlentities($msg); ?> </div><?php }?>
             <div class="form-group">
-              <label class="control-label">Current Password</label>
-              <input class="form-control white_bg" id="password" name="password"  type="password" required>
+              <label class="control-label" for="password">Current Password</label>
+              <input class="form-control white_bg" id="password" name="password" type="password" autocomplete="current-password" required>
             </div>
-            <div cl
             <div class="form-group">
-              <label class="control-label">Password</label>
-              <input class="form-control white_bg" id="newpassword" type="password" name="newpassword" required>
+              <label class="control-label" for="newpassword">New Password</label>
+              <input class="form-control white_bg" id="newpassword" type="password" name="newpassword" minlength="<?php echo MIN_PASSWORD_LENGTH; ?>" autocomplete="new-password" required>
+              <small class="help-block">At least <?php echo MIN_PASSWORD_LENGTH; ?> characters, including a letter and a number.</small>
             </div>
             <div class="form-group">
               <label class="control-label">Confirm Password</label>
@@ -189,7 +174,7 @@ foreach($results as $result)
 </section>
 <!--/Profile-setting--> 
 
-<<!--Footer -->
+<!--Footer -->
 <?php include('includes/footer.php');?>
 <!-- /Footer--> 
 
@@ -214,8 +199,6 @@ foreach($results as $result)
 <script src="assets/js/jquery.min.js"></script>
 <script src="assets/js/bootstrap.min.js"></script> 
 <script src="assets/js/interface.js"></script> 
-<!--Switcher-->
-<script src="assets/switcher/js/switcher.js"></script>
 <!--bootstrap-slider-JS--> 
 <script src="assets/js/bootstrap-slider.min.js"></script> 
 <!--Slider-JS--> 

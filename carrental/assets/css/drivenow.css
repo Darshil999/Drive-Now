@@ -1,0 +1,96 @@
+/* DriveNow additions on top of the base theme (style.css + red.css). */
+
+:root {
+  --dn-accent: #fa2837;
+  --dn-success: #2e7d32;
+  --dn-warning: #b26a00;
+  --dn-danger: #c62828;
+  --dn-muted: #6b7280;
+  --dn-border: #e5e7eb;
+}
+
+/* ---- Flash messages ---- */
+.flash-container { margin-top: 15px; }
+
+.flash-message { margin-bottom: 10px; border-radius: 4px; }
+
+/* ---- Booking widget (vehicle details) ---- */
+.booking-widget label { font-weight: 600; font-size: 13px; }
+.booking-summary {
+  background: #f8f9fa;
+  border: 1px dashed var(--dn-border);
+  border-radius: 4px;
+  color: var(--dn-muted);
+  font-size: 13px;
+  margin-bottom: 15px;
+  padding: 10px 12px;
+}
+.booking-summary strong { color: #111; display: block; font-size: 16px; margin-top: 4px; }
+.booking-summary.is-ok { border-color: var(--dn-success); border-style: solid; }
+.booking-summary.is-error { border-color: var(--dn-danger); color: var(--dn-danger); }
+.booked-dates { border-top: 1px solid var(--dn-border); margin-top: 20px; padding-top: 15px; }
+.booked-dates h6 { font-size: 14px; margin-bottom: 8px; }
+.booked-dates ul { list-style: none; margin: 0; padding: 0; }
+.booked-dates li { font-size: 13px; padding: 3px 0; }
+.booked-dates p { color: var(--dn-muted); font-size: 13px; margin: 0; }
+
+/* ---- Status badges ---- */
+.status-badge {
+  border-radius: 12px;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  padding: 3px 10px;
+  text-transform: uppercase;
+}
+.status-success { background: #e8f5e9; color: var(--dn-success); }
+.status-warning { background: #fff4e5; color: var(--dn-warning); }
+.status-danger  { background: #fdecea; color: var(--dn-danger); }
+
+/* ---- My bookings ---- */
+.booking-card {
+  border: 1px solid var(--dn-border);
+  border-radius: 6px;
+  margin-bottom: 25px;
+  padding: 20px;
+}
+.booking-card-head { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; margin-bottom: 15px; }
+.booking-card-head h4 { font-size: 16px; margin: 0; }
+.booking-card-body { display: flex; flex-wrap: wrap; gap: 20px; }
+.booking-card-body .vehicle_img img { border-radius: 4px; max-width: 180px; width: 100%; }
+.booking-card-body .booking-info { flex: 1 1 240px; }
+.booking-card-body .booking-info p { margin-bottom: 6px; }
+.booking-invoice { margin-top: 15px; overflow-x: auto; }
+.booking-invoice table { width: 100%; }
+.booking-invoice th, .booking-invoice td { padding: 8px 10px; white-space: nowrap; }
+.booking-actions { margin-top: 12px; }
+.booking-tabs { margin-bottom: 20px; }
+.empty-state { color: var(--dn-muted); padding: 40px 10px; text-align: center; }
+.empty-state .fa { color: var(--dn-border); display: block; font-size: 48px; margin-bottom: 10px; }
+
+/* ---- Listing filters ---- */
+.listing-filter-summary { color: var(--dn-muted); }
+.listing-filter-summary a { margin-left: 8px; }
+.product-listing-img img { width: 100%; }
+
+/* ---- Responsive fixes for the base theme ---- */
+img { max-width: 100%; height: auto; }
+body { overflow-x: hidden; }
+@media (max-width: 767px) {
+  .default-header .logo { text-align: center; }
+  .header_info { float: none; text-align: center; }
+  .header_info .header_widgets { display: none; }
+  .header_info .login_btn { margin: 10px 0 0; }
+  .result-sorting-wrapper .sorting-count,
+  .result-sorting-by { float: none; width: 100%; }
+  .result-sorting-by form, .result-sorting-by select { display: block; width: 100%; }
+  .product-listing-content ul li { display: inline-block; margin: 0 12px 6px 0; }
+  .page-header h1 { font-size: 26px; }
+  .listing_detail_head h2 { font-size: 22px; }
+  .product-listing-m { display: block; }
+  .product-listing-img, .product-listing-content { float: none; width: 100%; }
+  .main_features ul li { width: 33%; }
+  .profile_wrap, .booking-card { padding: 15px; }
+  table { display: block; overflow-x: auto; }
+}

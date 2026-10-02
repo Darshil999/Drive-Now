@@ -53,7 +53,7 @@
 	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 .grabbing { 
-    cursor:url(grabbing.html) 8 8, move;
+    cursor: grabbing;
 }
 .owl-carousel  .owl-wrapper,
 .owl-carousel  .owl-item{

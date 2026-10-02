@@ -1,8 +1,6 @@
 <?php
-session_start();
-error_reporting(0);
 include('includes/config.php');
-if(strlen($_SESSION['alogin'])==0)
+if(empty($_SESSION['alogin']))
 	{	
 header('location:index.php');
 }
@@ -10,26 +8,19 @@ else{
 // Code for change password	
 if(isset($_POST['submit']))
 	{
-$password=md5($_POST['password']);
-$newpassword=md5($_POST['newpassword']);
 $username=$_SESSION['alogin'];
-$sql ="SELECT Password FROM admin WHERE UserName=:username and Password=:password";
-$query= $dbh -> prepare($sql);
-$query-> bindParam(':username', $username, PDO::PARAM_STR);
-$query-> bindParam(':password', $password, PDO::PARAM_STR);
-$query-> execute();
-$results = $query -> fetchAll(PDO::FETCH_OBJ);
-if($query -> rowCount() > 0)
-{
-$con="update admin set Password=:newpassword where UserName=:username";
-$chngpwd1 = $dbh->prepare($con);
-$chngpwd1-> bindParam(':username', $username, PDO::PARAM_STR);
-$chngpwd1-> bindParam(':newpassword', $newpassword, PDO::PARAM_STR);
-$chngpwd1->execute();
-$msg="Your Password succesfully changed";
-}
-else {
-$error="Your current password is not valid.";	
+$query = $dbh->prepare('SELECT Password FROM admin WHERE UserName = :username');
+$query->execute([':username' => $username]);
+$stored = $query->fetchColumn();
+$problem = password_problem($_POST['newpassword'] ?? '', $_POST['confirmpassword'] ?? '');
+if (!password_matches($_POST['password'] ?? '', $stored)) {
+$error="Your current password is not valid.";
+} elseif ($problem) {
+$error=$problem;
+} else {
+$dbh->prepare('UPDATE admin SET Password = :newpassword WHERE UserName = :username')
+    ->execute([':newpassword' => hash_password($_POST['newpassword']), ':username' => $username]);
+$msg="Your password was changed successfully.";
 }
 }
 ?>
@@ -45,7 +36,7 @@ $error="Your current password is not valid.";
 	<meta name="author" content="">
 	<meta name="theme-color" content="#3e454c">
 	
-	<title>Car Rental Portal | Admin Change Password</title>
+	<title>DriveNow Admin | Change Password</title>
 
 	<!-- Font awesome -->
 	<link rel="stylesheet" href="css/font-awesome.min.css">
@@ -63,6 +54,7 @@ $error="Your current password is not valid.";
 	<link rel="stylesheet" href="css/awesome-bootstrap-checkbox.css">
 	<!-- Admin Stye -->
 	<link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" href="css/drivenow-admin.css">
 <script type="text/javascript">
 function valid()
 {
@@ -75,24 +67,6 @@ return false;
 return true;
 }
 </script>
-  <style>
-		.errorWrap {
-    padding: 10px;
-    margin: 0 0 20px 0;
-    background: #fff;
-    border-left: 4px solid #dd3d36;
-    -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-    box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-}
-.succWrap{
-    padding: 10px;
-    margin: 0 0 20px 0;
-    background: #fff;
-    border-left: 4px solid #5cb85c;
-    -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-    box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-}
-		</style>
 
 
 </head>
@@ -115,6 +89,7 @@ return true;
 									<div class="panel-heading">Form fields</div>
 									<div class="panel-body">
 										<form method="post" name="chngpwd" class="form-horizontal" onSubmit="return valid();">
+<?php echo csrf_field(); ?>
 										
 											
   	        	  <?php if($error){?><div class="errorWrap"><strong>ERROR</strong>:<?php echo htmlentities($error); ?> </div><?php } 

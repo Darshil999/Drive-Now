@@ -1,0 +1,20 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local environment overrides
+.env
+
+# Logs
+*.log
+
+# Runtime files (demo mail outbox)
+carrental/storage/*
+!carrental/storage/.htaccess
+
+# Composer / PHPUnit
+/vendor/
+.phpunit.result.cache
+.phpunit.cache/

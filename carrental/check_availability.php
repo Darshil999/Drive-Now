@@ -1,30 +1,16 @@
-<?php 
-require_once("includes/config.php");
-// code user email availablity
-if(!empty($_POST["emailid"])) {
-	$email= $_POST["emailid"];
-	if (filter_var($email, FILTER_VALIDATE_EMAIL)===false) {
+<?php
+// AJAX endpoint used by the sign-up form to check whether an email is free.
+require_once __DIR__ . '/includes/config.php';
+header('Content-Type: application/json');
 
-		echo "error : You did not enter a valid email.";
-	}
-	else {
-		$sql ="SELECT EmailId FROM tblusers WHERE EmailId=:email";
-$query= $dbh -> prepare($sql);
-$query-> bindParam(':email', $email, PDO::PARAM_STR);
-$query-> execute();
-$results = $query -> fetchAll(PDO::FETCH_OBJ);
-$cnt=1;
-if($query -> rowCount() > 0)
-{
-echo "<span style='color:red'> Email already exists .</span>";
- echo "<script>$('#submit').prop('disabled',true);</script>";
-} else{
-	
-	echo "<span style='color:green'> Email available for Registration .</span>";
- echo "<script>$('#submit').prop('disabled',false);</script>";
-}
-}
+$email = trim($_POST['emailid'] ?? '');
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    echo json_encode(['available' => false, 'message' => 'Please enter a valid email address.']);
+    exit;
 }
 
-
-?>
+$stmt = $dbh->prepare('SELECT 1 FROM tblusers WHERE EmailId = :email');
+$stmt->execute([':email' => $email]);
+echo json_encode($stmt->fetchColumn()
+    ? ['available' => false, 'message' => 'Email already registered. Please log in instead.']
+    : ['available' => true, 'message' => 'Email available for registration.']);

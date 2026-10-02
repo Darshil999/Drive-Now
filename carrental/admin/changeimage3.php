@@ -1,8 +1,6 @@
 <?php
-session_start();
-error_reporting(0);
 include('includes/config.php');
-if(strlen($_SESSION['alogin'])==0)
+if(empty($_SESSION['alogin']))
 	{	
 header('location:index.php');
 }
@@ -10,19 +8,15 @@ else{
 // Code for change password	
 if(isset($_POST['update']))
 {
-$vimage=$_FILES["img3"]["name"];
-$id=intval($_GET['imgid']);
-move_uploaded_file($_FILES["img3"]["tmp_name"],"img/vehicleimages/".$_FILES["img3"]["name"]);
-$sql="update tblvehicles set Vimage3=:vimage where id=:id";
-$query = $dbh->prepare($sql);
-$query->bindParam(':vimage',$vimage,PDO::PARAM_STR);
-$query->bindParam(':id',$id,PDO::PARAM_STR);
-$query->execute();
-
+$id=intval($_GET['imgid'] ?? 0);
+try {
+$vimage = store_vehicle_image('img3');
+$query = $dbh->prepare("update tblvehicles set Vimage3=:vimage where id=:id");
+$query->execute([':vimage' => $vimage, ':id' => $id]);
 $msg="Image updated successfully";
-
-
-
+} catch (RuntimeException $ex) {
+$error = $ex->getMessage();
+}
 }
 ?>
 
@@ -37,7 +31,7 @@ $msg="Image updated successfully";
 	<meta name="author" content="">
 	<meta name="theme-color" content="#3e454c">
 	
-	<title>Car Rental Portal | Admin Update Image 3</title>
+	<title>DriveNow Admin | Update Image 3</title>
 
 	<!-- Font awesome -->
 	<link rel="stylesheet" href="css/font-awesome.min.css">
@@ -55,24 +49,7 @@ $msg="Image updated successfully";
 	<link rel="stylesheet" href="css/awesome-bootstrap-checkbox.css">
 	<!-- Admin Stye -->
 	<link rel="stylesheet" href="css/style.css">
-  <style>
-		.errorWrap {
-    padding: 10px;
-    margin: 0 0 20px 0;
-    background: #fff;
-    border-left: 4px solid #dd3d36;
-    -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-    box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-}
-.succWrap{
-    padding: 10px;
-    margin: 0 0 20px 0;
-    background: #fff;
-    border-left: 4px solid #5cb85c;
-    -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-    box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
-}
-		</style>
+	<link rel="stylesheet" href="css/drivenow-admin.css">
 
 
 </head>
@@ -95,6 +72,7 @@ $msg="Image updated successfully";
 									<div class="panel-heading">Vehicle Image 3 Details</div>
 									<div class="panel-body">
 										<form method="post" class="form-horizontal" enctype="multipart/form-data">
+<?php echo csrf_field(); ?>
 										
 											
   	        	  <?php if($error){?><div class="errorWrap"><strong>ERROR</strong>:<?php echo htmlentities($error); ?> </div><?php } 
@@ -126,7 +104,7 @@ foreach($results as $result)
 											<div class="form-group">
 												<label class="col-sm-4 control-label">Upload New Image 3<span style="color:red">*</span></label>
 												<div class="col-sm-8">
-											<input type="file" name="img3" required>
+											<input type="file" accept="image/*" name="img3" required>
 												</div>
 											</div>
 											<div class="hr-dashed"></div>

@@ -1,39 +1,31 @@
 <?php
-session_start();
-error_reporting(0);
 include('includes/config.php');
-if(strlen($_SESSION['login'])==0)
-  { 
-header('location:index.php');
+if(!is_logged_in())
+  {
+flash('info', 'Please log in to continue.');
+redirect('index.php');
 }
 else{
 if(isset($_POST['submit']))
   {
-$testimonoial=$_POST['testimonial'];
-$email=$_SESSION['login'];
-$sql="INSERT INTO  tbltestimonial(UserEmail,Testimonial) VALUES(:email,:testimonoial)";
-$query = $dbh->prepare($sql);
-$query->bindParam(':testimonoial',$testimonoial,PDO::PARAM_STR);
-$query->bindParam(':email',$email,PDO::PARAM_STR);
-
-$query->execute();
-$lastInsertId = $dbh->lastInsertId();
-if($lastInsertId)
-{
-$msg="Testimonail submitted successfully";
+$testimonial=trim($_POST['testimonial'] ?? '');
+if (mb_strlen($testimonial) < 10 || mb_strlen($testimonial) > 1000) {
+    flash('error', 'Please write between 10 and 1000 characters.');
+    redirect('post-testimonial.php');
 }
-else 
-{
-$error="Something went wrong. Please try again";
-}
-
+$sql="INSERT INTO tbltestimonial(UserEmail,Testimonial,status) VALUES(:email,:testimonial,0)";
+$dbh->prepare($sql)->execute([':email' => $_SESSION['login'], ':testimonial' => $testimonial]);
+flash('success', 'Thanks! Your testimonial was submitted and will appear once approved.');
+redirect('my-testimonials.php');
 }
 ?>
   <!DOCTYPE HTML>
 <html lang="en">
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Car Rental Portal |Post testimonial</title>
+<title>DriveNow | Post testimonial</title>
 <!--Bootstrap -->
 <link rel="stylesheet" href="assets/css/bootstrap.min.css" type="text/css">
 <!--Custome Style -->
@@ -48,16 +40,9 @@ $error="Something went wrong. Please try again";
 <!--FontAwesome Font Style -->
 <link href="assets/css/font-awesome.min.css" rel="stylesheet">
 
-<!-- SWITCHER -->
-		<link rel="stylesheet" id="switcher-css" type="text/css" href="assets/switcher/css/switcher.css" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/red.css" title="red" media="all" data-default-color="true" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/orange.css" title="orange" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/blue.css" title="blue" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/pink.css" title="pink" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/green.css" title="green" media="all" />
-		<link rel="alternate stylesheet" type="text/css" href="assets/switcher/css/purple.css" title="purple" media="all" />
+<link rel="stylesheet" href="assets/switcher/css/red.css" type="text/css">
+<link rel="stylesheet" href="assets/css/drivenow.css" type="text/css">
 <link rel="apple-touch-icon-precomposed" sizes="144x144" href="assets/images/favicon-icon/apple-touch-icon-144-precomposed.png">
-<link rel="apple-touch-icon-precomposed" sizes="114x114" href="assets/images/favicon-icon/apple-touch-icon-114-precomposed.html">
 <link rel="apple-touch-icon-precomposed" sizes="72x72" href="assets/images/favicon-icon/apple-touch-icon-72-precomposed.png">
 <link rel="apple-touch-icon-precomposed" href="assets/images/favicon-icon/apple-touch-icon-57-precomposed.png">
 <link rel="shortcut icon" href="assets/images/favicon-icon/favicon.png">
@@ -83,9 +68,6 @@ $error="Something went wrong. Please try again";
 </head>
 <body>
 
-<!-- Start Switcher -->
-<?php include('includes/colorswitcher.php');?>
-<!-- /Switcher -->  
         
 <!--Header-->
 <?php include('includes/header.php');?>
@@ -98,7 +80,7 @@ $error="Something went wrong. Please try again";
         <h1>Post Testimonial</h1>
       </div>
       <ul class="coustom-breadcrumb">
-        <li><a href="#">Home</a></li>
+        <li><a href="index.php">Home</a></li>
         <li>Post Testimonial</li>
       </ul>
     </div>
@@ -139,14 +121,13 @@ foreach($results as $result)
       <div class="col-md-6 col-sm-8">
         <div class="profile_wrap">
           <h5 class="uppercase underline">Post a Testimonial</h5>
-            <?php if($error){?><div class="errorWrap"><strong>ERROR</strong>:<?php echo htmlentities($error); ?> </div><?php } 
-        else if($msg){?><div class="succWrap"><strong>SUCCESS</strong>:<?php echo htmlentities($msg); ?> </div><?php }?>
           <form  method="post">
+<?php echo csrf_field(); ?>
           
           
             <div class="form-group">
-              <label class="control-label">Testimonail</label>
-              <textarea class="form-control white_bg" name="testimonial" rows="4" required=""></textarea>
+              <label class="control-label" for="testimonial">Your experience</label>
+              <textarea class="form-control white_bg" id="testimonial" name="testimonial" rows="4" minlength="10" maxlength="1000" required></textarea>
             </div>
           
            
@@ -161,7 +142,7 @@ foreach($results as $result)
 </section>
 <!--/Profile-setting--> 
 
-<<!--Footer -->
+<!--Footer -->
 <?php include('includes/footer.php');?>
 <!-- /Footer--> 
 
@@ -186,8 +167,6 @@ foreach($results as $result)
 <script src="assets/js/jquery.min.js"></script>
 <script src="assets/js/bootstrap.min.js"></script> 
 <script src="assets/js/interface.js"></script> 
-<!--Switcher-->
-<script src="assets/switcher/js/switcher.js"></script>
 <!--bootstrap-slider-JS--> 
 <script src="assets/js/bootstrap-slider.min.js"></script> 
 <!--Slider-JS--> 

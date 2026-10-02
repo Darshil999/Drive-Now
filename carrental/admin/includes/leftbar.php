@@ -1,40 +1,44 @@
+<?php
+$adminPage = basename($_SERVER['PHP_SELF']);
+$menu = [
+    ['dashboard.php', 'fa-dashboard', 'Dashboard'],
+    ['Brands', 'fa-tags', [
+        ['create-brand.php', 'Create Brand'],
+        ['manage-brands.php', 'Manage Brands'],
+    ]],
+    ['Vehicles', 'fa-car', [
+        ['post-avehical.php', 'Add a Vehicle'],
+        ['manage-vehicles.php', 'Manage Vehicles'],
+    ]],
+    ['Bookings', 'fa-calendar-check-o', [
+        ['manage-bookings.php', 'All Bookings'],
+        ['new-bookings.php', 'New'],
+        ['confirmed-bookings.php', 'Confirmed'],
+        ['canceled-bookings.php', 'Cancelled'],
+    ]],
+    ['testimonials.php', 'fa-comments', 'Testimonials'],
+    ['manage-conactusquery.php', 'fa-envelope', 'Contact Queries'],
+    ['reg-users.php', 'fa-users', 'Registered Users'],
+    ['manage-subscribers.php', 'fa-newspaper-o', 'Subscribers'],
+    ['manage-pages.php', 'fa-file-text-o', 'Manage Pages'],
+    ['update-contactinfo.php', 'fa-phone', 'Contact Info'],
+];
+?>
 	<nav class="ts-sidebar">
-			<ul class="ts-sidebar-menu">
-			
-				<li class="ts-label">Main</li>
-				<li><a href="dashboard.php"><i class="fa fa-dashboard"></i> Dashboard</a></li>
-			
-<li><a href="#"><i class="fa fa-files-o"></i> Brands</a>
-<ul>
-<li><a href="create-brand.php">Create Brand</a></li>
-<li><a href="manage-brands.php">Manage Brands</a></li>
-</ul>
-</li>
-
-<li><a href="#"><i class="fa fa-car"></i> Vehicles</a>
-					<ul>
-						<li><a href="post-avehical.php">Post a Vehicle</a></li>
-						<li><a href="manage-vehicles.php">Manage Vehicles</a></li>
-					</ul>
-				</li>
-
-<li><a href="#"><i class="fa fa-sitemap"></i> Bookings</a>
-					<ul>
-						<li><a href="new-bookings.php">New</a></li>
-						<li><a href="confirmed-bookings.php">Confirmed</a></li>
-						<li><a href="canceled-bookings.php">Canceled</a></li>
-					</ul>
-				</li>
-
-		
-
-				<li><a href="testimonials.php"><i class="fa fa-table"></i> Manage Testimonials</a></li>
-				<li><a href="manage-conactusquery.php"><i class="fa fa-desktop"></i> Manage Conatctus Query</a></li>
-				<li><a href="reg-users.php"><i class="fa fa-users"></i> Reg Users</a></li>
-			<li><a href="manage-pages.php"><i class="fa fa-files-o"></i> Manage Pages</a></li>
-			<li><a href="update-contactinfo.php"><i class="fa fa-files-o"></i> Update Contact Info</a></li>
-
-			<li><a href="manage-subscribers.php"><i class="fa fa-table"></i> Manage Subscribers</a></li>
-
-			</ul>
-		</nav>
+		<ul class="ts-sidebar-menu">
+			<li class="ts-label">Main</li>
+<?php foreach ($menu as [$target, $icon, $children]) {
+    if (is_array($children)) {
+        $open = in_array($adminPage, array_column($children, 0), true); ?>
+			<li class="<?php echo $open ? 'open' : ''; ?>"><a href="#"><i class="fa <?php echo $icon; ?>"></i> <?php echo e($target); ?></a>
+				<ul>
+				<?php foreach ($children as [$href, $label]) { ?>
+					<li class="<?php echo $adminPage === $href ? 'active' : ''; ?>"><a href="<?php echo $href; ?>"><?php echo e($label); ?></a></li>
+				<?php } ?>
+				</ul>
+			</li>
+<?php } else { ?>
+			<li class="<?php echo $adminPage === $target ? 'active' : ''; ?>"><a href="<?php echo $target; ?>"><i class="fa <?php echo $icon; ?>"></i> <?php echo e($children); ?></a></li>
+<?php } } ?>
+		</ul>
+	</nav>

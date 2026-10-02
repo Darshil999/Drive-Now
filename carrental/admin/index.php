@@ -1,26 +1,20 @@
 <?php
-session_start();
 include('includes/config.php');
+if (!empty($_SESSION['alogin'])) {
+    redirect('dashboard.php');
+}
 if(isset($_POST['login']))
 {
-$email=$_POST['username'];
-$password=md5($_POST['password']);
-$sql ="SELECT UserName,Password FROM admin WHERE UserName=:email and Password=:password";
-$query= $dbh -> prepare($sql);
-$query-> bindParam(':email', $email, PDO::PARAM_STR);
-$query-> bindParam(':password', $password, PDO::PARAM_STR);
-$query-> execute();
-$results=$query->fetchAll(PDO::FETCH_OBJ);
-if($query->rowCount() > 0)
+$adminName = attempt_admin_login($dbh, $_POST['username'] ?? '', $_POST['password'] ?? '');
+if ($adminName !== null)
 {
-$_SESSION['alogin']=$_POST['username'];
-echo "<script type='text/javascript'> document.location = 'dashboard.php'; </script>";
-} else{
-  
-  echo "<script>alert('Invalid Details');</script>";
-
+session_regenerate_id(true);
+$_SESSION['alogin'] = $adminName;
+redirect('dashboard.php');
+} else {
+flash('error', 'Invalid username or password.');
+redirect('index.php');
 }
-
 }
 
 ?>
@@ -34,7 +28,7 @@ echo "<script type='text/javascript'> document.location = 'dashboard.php'; </scr
 	<meta name="description" content="">
 	<meta name="author" content="">
 
-	<title>Car Rental Portal | Admin Login</title>
+	<title>DriveNow Admin | Login</title>
 	<link rel="stylesheet" href="css/font-awesome.min.css">
 	<link rel="stylesheet" href="css/bootstrap.min.css">
 	<link rel="stylesheet" href="css/dataTables.bootstrap.min.css">
@@ -43,6 +37,7 @@ echo "<script type='text/javascript'> document.location = 'dashboard.php'; </scr
 	<link rel="stylesheet" href="css/fileinput.min.css">
 	<link rel="stylesheet" href="css/awesome-bootstrap-checkbox.css">
 	<link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" href="css/drivenow-admin.css">
 </head>
 
 <body>
@@ -52,16 +47,18 @@ echo "<script type='text/javascript'> document.location = 'dashboard.php'; </scr
 			<div class="container">
 				<div class="row">
 					<div class="col-md-6 col-md-offset-3">
-						<h1 class="text-center text-bold mt-4x" style="color:#fff">Admin | Sign in</h1>
+						<h1 class="text-center text-bold mt-4x" style="color:#fff">DriveNow Admin</h1>
 						<div class="well row pt-2x pb-3x bk-light">
 							<div class="col-md-8 col-md-offset-2">
 								<form method="post">
+<?php echo csrf_field(); ?>
 
-									<label for="" class="text-uppercase text-sm">Your Username </label>
-									<input type="text" placeholder="Username" name="username" class="form-control mb">
+									<?php render_flashes(); ?>
+									<label for="admin-username" class="text-uppercase text-sm">Your Username </label>
+									<input type="text" placeholder="Username" id="admin-username" name="username" class="form-control mb" autocomplete="username" required>
 
-									<label for="" class="text-uppercase text-sm">Password</label>
-									<input type="password" placeholder="Password" name="password" class="form-control mb">
+									<label for="admin-password" class="text-uppercase text-sm">Password</label>
+									<input type="password" placeholder="Password" id="admin-password" name="password" class="form-control mb" autocomplete="current-password" required>
 		
 
 									<button class="btn btn-primary btn-block" name="login" type="submit">LOGIN</button>

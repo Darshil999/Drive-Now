@@ -1,0 +1,11 @@
+# Uploaded vehicle images only: never execute scripts from this folder.
+<FilesMatch "\.(php\d?|phtml|phar|pl|py|cgi|sh)$">
+    Require all denied
+</FilesMatch>
+<IfModule php_module>
+    php_flag engine off
+</IfModule>
+<IfModule php7_module>
+    php_flag engine off
+</IfModule>
+Options -Indexes

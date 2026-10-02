@@ -1,0 +1,57 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8080:80"
+    volumes:
+      - ./carrental:/var/www/html
+    environment:
+      DB_HOST: db
+      DB_NAME: carrental
+      DB_USER: drivenow
+      DB_PASS: drivenow
+      APP_URL: http://localhost:8080
+      MAIL_DRIVER: log
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: carrental
+      MYSQL_USER: drivenow
+      MYSQL_PASSWORD: drivenow
+    volumes:
+      - db_data:/var/lib/mysql
+      - "./SQL File/carrental.sql:/docker-entrypoint-initdb.d/01-carrental.sql:ro"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 5s
+      retries: 20
+
+  # Test runner: docker compose run --rm tests
+  # Uses its own `carrental_test` database, so demo data is never touched.
+  tests:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    profiles: ["test"]
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      TEST_DB_HOST: db
+      TEST_DB_USER: root
+      TEST_DB_PASS: root
+      REQUIRE_DB_TESTS: "1"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["sh", "-c", "composer install --no-interaction --no-progress && vendor/bin/phpunit"]
+
+volumes:
+  db_data:

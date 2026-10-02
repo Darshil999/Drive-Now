@@ -1,0 +1,41 @@
+/* DriveNow admin panel: shared styles on top of the base admin theme (style.css). */
+
+:root {
+  --dn-accent: #fa2837;
+}
+
+/* Brand bar */
+.brand > a { color: #fff; display: inline-block; font-weight: 700; letter-spacing: .3px; padding-left: 20px; }
+.brand a .brand-accent { color: var(--dn-accent); }
+
+/* Inline status messages (pages that render $msg / $error) */
+.errorWrap,
+.succWrap {
+  background: #fff;
+  box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .1);
+  margin: 0 0 20px 0;
+  padding: 10px 14px;
+}
+.errorWrap { border-left: 4px solid #dd3d36; }
+.succWrap { border-left: 4px solid #5cb85c; }
+
+/* Floating flash messages */
+.admin-flash { max-width: 420px; position: fixed; right: 20px; top: 70px; z-index: 1050; }
+.admin-flash .alert { box-shadow: 0 4px 12px rgba(0, 0, 0, .15); }
+
+/* POST action buttons rendered by action_button() */
+.inline-action { display: inline-block; margin: 0 2px 2px 0; }
+.inline-action .btn-xs { padding: 2px 8px; }
+td.text-nowrap { white-space: nowrap; }
+
+/* Status labels */
+.label { display: inline-block; font-size: 11px; letter-spacing: .3px; padding: .35em .7em; }
+td .label + .inline-action { margin-left: 6px; }
+
+/* Sidebar active item */
+.ts-sidebar-menu li.active > a { border-left: 3px solid var(--dn-accent); color: #fff; }
+
+/* Tables scroll instead of overflowing on small screens */
+@media (max-width: 767px) {
+  .panel-body { overflow-x: auto; }
+}
